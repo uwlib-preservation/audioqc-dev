@@ -73,6 +73,7 @@ class QcTarget
       if @media_info_out['media']['track'][0]['extra']['bext_Present'] == 'Yes' && @media_info_out['media']['track'][0]['Encoded_Library_Settings']
         @coding_history = @media_info_out['media']['track'][0]['Encoded_Library_Settings']
         @stereo_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].scan(/stereo/i).count
+        @mono_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].scan(/mono/i).count
         @dual_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].gsub("dual-sided","").scan(/dual/i).count
         @signal_chain_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].scan(/A=/).count
       end
@@ -126,6 +127,19 @@ class QcTarget
     end
     if @average_phase < phase_limit
       @warnings << 'Phase Warning'
+    end
+
+    # Check Coding History for accuracy vs channels
+    if ! @dual_count.nil? && ! @stereo_count.nil?
+      if @channel_count == "1"
+        unless (@mono_count - @dual_count) == @signal_chain_count
+          @warnings << "BEXT Coding History channels don't match file"
+        end
+      elsif @channel_count == "2"
+        unless @stereo_count + @dual_count == @signal_chain_count
+          @warnings << "BEXT Coding History channels don't match file"
+        end
+      end
     end
   end
       
