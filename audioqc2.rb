@@ -5,9 +5,21 @@ load 'audioqc_methods.rb'
 load_options('settings.csv')
 
 targets = ARGV
+file_inputs = []
 qc_files = []
 
-targets.each {|target| qc_files << QcTarget.new(target)}
+targets.each do |target|
+  if File.directory?(target)
+    targets = Dir["#{target}/**/*.{WAV,wav}"]
+    targets.each {|file| file_inputs << file}
+  elsif File.extname(target).downcase == '.wav'
+    file_inputs << target
+  end
+end
+
+
+
+file_inputs.each {|file| qc_files << QcTarget.new(file)}
 
 
 qc_files.each do |target|

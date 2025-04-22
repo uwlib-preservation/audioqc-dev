@@ -14,7 +14,7 @@ class QcTarget
   end
 
   def calculatehash
-    @md5 = `ffmpeg -nostdin -i #{@input_path} -c copy -f md5 -`.chomp.reverse.chomp('=5DM').reverse.upcase
+    @md5 = `ffmpeg -nostdin -i "#{@input_path}" -c copy -f md5 -`.chomp.reverse.chomp('=5DM').reverse.upcase
   end
 
   def probe
@@ -42,14 +42,14 @@ class QcTarget
 
   def phase
     phase_values = []
-    phase_command = `ffmpeg -i #{@input_path} -af aformat=dblp,channelsplit,axcorrelate=size=1024:algo=slow -f wav - | ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.1.DC_offset -f lavfi -i "amovie='pipe\\:0',astats=reset=1:metadata=1"`
+    phase_command = `ffmpeg -i "#{@input_path}" -af aformat=dblp,channelsplit,axcorrelate=size=1024:algo=slow -f wav - | ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.1.DC_offset -f lavfi -i "amovie='pipe\\:0',astats=reset=1:metadata=1"`
     phase_info = JSON.parse(phase_command)
     phase_info['frames'].each {|frame| phase_values << frame['tags']['lavfi.astats.1.DC_offset'].to_f}
     @average_phase = (phase_values.sum/phase_values.count).round(2)
   end
 
   def media_conch
-    @media_conch_out = CSV.parse(`mediaconch --Policy=#{$conch_policy} --Format=csv #{@input_path}`)
+    @media_conch_out = CSV.parse(`mediaconch --Policy=#{$conch_policy} --Format=csv "#{@input_path}"`)
     @conch_failures = []
     if @media_conch_out[1][1] != 'pass'
       @conch_result = 'fail'
@@ -65,7 +65,7 @@ class QcTarget
   end
 
   def media_info
-    @media_info_out = JSON.parse(`mediainfo --Output=JSON #{@input_path}`)
+    @media_info_out = JSON.parse(`mediainfo --Output=JSON "#{@input_path}"`)
     @channel_count = @media_info_out['media']['track'][1]['Channels']
     @duration_normalized = Time.at(@media_info_out['media']['track'][0]['Duration'].to_f).utc.strftime('%H:%M:%S')
     #check for BEXT coding history metadata
@@ -74,7 +74,7 @@ class QcTarget
         @coding_history = @media_info_out['media']['track'][0]['Encoded_Library_Settings']
         @stereo_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].scan(/stereo/i).count
         @dual_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].gsub("dual-sided","").scan(/dual/i).count
-        @signal_chain_count = @mediainfo_out['media']['track'][0]['Encoded_Library_Settings'].scan(/A=/).count
+        @signal_chain_count = @media_info_out['media']['track'][0]['Encoded_Library_Settings'].scan(/A=/).count
       end
     else
       @warnings << 'No BEXT'
