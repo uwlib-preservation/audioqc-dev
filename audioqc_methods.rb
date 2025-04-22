@@ -29,7 +29,7 @@ class QcTarget
         next
       else
         channel_one_vol << frame['tags']['lavfi.astats.1.Peak_level'].to_f
-        channel_two_vol << frame['tags']['lavfi.astats.2.Peak_level'].to_f
+        channel_two_vol << frame['tags']['lavfi.astats.2.Peak_level'].to_f unless frame['tags']['lavfi.astats.2.Peak_level'].nil?
         overall_volume << frame['tags']['lavfi.astats.Overall.Peak_level'].to_f
       end
     end
