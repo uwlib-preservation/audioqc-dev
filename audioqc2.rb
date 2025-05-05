@@ -1,6 +1,7 @@
 require 'parallel'
 require 'json'
 require 'csv'
+require 'ruby-progressbar'
 load 'audioqc_methods.rb'
 load_options('settings.csv')
 
@@ -27,26 +28,31 @@ qc_files.each do |target|
   target.media_conch
 end
 
-#Calculate hash of audio stream
-hashes = Parallel.map(qc_files) {|file| file.calculatehash}
+#Parallel version
+# #Calculate hash of audio stream
+# hashes = Parallel.map(qc_files) {|file| file.calculatehash}
 
-hashes.each_with_index do |hash, index|
-  qc_files[index].store_hash(hash)
-end
+# hashes.each_with_index do |hash, index|
+#   qc_files[index].store_hash(hash)
+# end
 
-#Calculate FFprobe information of input files
-probe_data = Parallel.map(qc_files) {|file| file.probe}
+# #Calculate FFprobe information of input files
+# probe_data = Parallel.map(qc_files) {|file| file.probe}
 
-probe_data.each_with_index do |probe, index|
-  qc_files[index].store_probe(probe)
-end
-
+# probe_data.each_with_index do |probe, index|
+#   qc_files[index].store_probe(probe)
+# end
 #Calculate average phase
-phase_data = Parallel.map(qc_files) {|file| file.phase}
+# phase_data = Parallel.map(qc_files, in_processes: 1) {|file| file.phase}
 
-phase_data.each_with_index do |phase, index|
-  qc_files[index].store_phase(phase)
-end
+# phase_data.each_with_index do |phase, index|
+#   qc_files[index].store_phase(phase)
+# end
+
+# Non-parallel version
+qc_files.each {|file| file.calculatehash}
+qc_files.each {|file| file.probe}
+qc_files.each {|file| file.phase}
 
 qc_files.each {|file| file.generate_warnings}
 
