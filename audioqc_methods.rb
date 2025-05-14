@@ -4,6 +4,7 @@ def load_options(option_file)
   $stereo_phase_thresh = options[1][1].to_f
   $dual_mono_phase_thresh = options[1][2].to_f
   $conch_policy = options[1][3]
+  $output_path_custom = options[1][4]
 end
 
 class QcTarget
@@ -42,7 +43,7 @@ class QcTarget
 
   def phase
     phase_values = []
-    phase_command = `ffmpeg -i "#{@input_path}" -af aformat=dblp,channelsplit,axcorrelate=size=1024:algo=slow -f wav - | ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.1.DC_offset -f lavfi -i "amovie='pipe\\:0',astats=reset=1:metadata=1"`
+    phase_command = `ffmpeg -i "#{@input_path}" -af aformat=dblp,channelsplit,axcorrelate=size=1024:algo=fast -f wav - | ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.1.DC_offset -f lavfi -i "amovie='pipe\\:0',astats=reset=1:metadata=1"`
     phase_info = JSON.parse(phase_command)
     phase_info['frames'].each {|frame| phase_values << frame['tags']['lavfi.astats.1.DC_offset'].to_f}
     @average_phase = (phase_values.sum/phase_values.count).round(2)

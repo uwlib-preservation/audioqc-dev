@@ -8,6 +8,7 @@ load_options('settings.csv')
 targets = ARGV
 file_inputs = []
 qc_files = []
+timestamp = Time.now.strftime('%Y-%m-%d_%H-%M-%S')
 
 targets.each do |target|
   if File.directory?(target)
@@ -21,12 +22,6 @@ end
 
 
 file_inputs.each {|file| qc_files << QcTarget.new(file)}
-
-
-qc_files.each do |target|
-  target.media_info
-  target.media_conch
-end
 
 #Parallel version
 # #Calculate hash of audio stream
@@ -50,16 +45,28 @@ end
 # end
 
 # Non-parallel version
-qc_files.each {|file| file.calculatehash}
-qc_files.each {|file| file.probe}
-qc_files.each {|file| file.phase}
+qc_files.each do |file|
+  begin
+    file.media_info
+    file.media_conch
+    file.calculatehash
+    file.probe
+    file.phase
+    file.generate_warnings
+  rescue
+    puts 'oops'
+  end
+end
 
-qc_files.each {|file| file.generate_warnings}
-
-output_csv_path = "/home/weaveraj/Desktop/test.csv"
+if File.exist?($output_path_custom)
+  output_csv_path = $output_path_custom
+else
+  output_csv_path = ENV['HOME'] + "/Desktop/"
+end
+output_csv_name = "audioqc-out_#{timestamp}.csv"
+output_csv = "#{output_csv_path}/#{output_csv_name}"
 
 
 qc_files.each do |file|
-  file.write_csv_line(output_csv_path)
-  file.output
+  file.write_csv_line(output_csv)
 end
