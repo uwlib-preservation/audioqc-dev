@@ -29,9 +29,9 @@ class QcTarget
       if frame['tags']['lavfi.astats.1.Peak_level'] == '-inf' || frame['tags']['lavfi.astats.2.Peak_level'] == '-inf'
         next
       else
-        channel_one_vol << frame['tags']['lavfi.astats.1.Peak_level'].to_f
-        channel_two_vol << frame['tags']['lavfi.astats.2.Peak_level'].to_f unless frame['tags']['lavfi.astats.2.Peak_level'].nil?
-        overall_volume << frame['tags']['lavfi.astats.Overall.Peak_level'].to_f
+        channel_one_vol << frame['tags']['lavfi.astats.1.Peak_level'].to_f.round(2)
+        channel_two_vol << frame['tags']['lavfi.astats.2.Peak_level'].to_f.round(2) unless frame['tags']['lavfi.astats.2.Peak_level'].nil?
+        overall_volume << frame['tags']['lavfi.astats.Overall.Peak_level'].to_f.round(2)
       end
     end
   @integratedLoudness = ffprobe_out['frames'][ffprobe_out.length - 3]['tags']['lavfi.r128.I']
