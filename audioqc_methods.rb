@@ -109,7 +109,7 @@ class QcTarget
       @md5_alert = 'No MD5'
     elsif @stored_md5 != @md5
       @warnings << 'Failed MD5 Verification'
-      @md5_alert = @md5
+      @md5_alert = "Failed: #{@md5}"
     else
       @md5_alert = 'Pass'
     end
@@ -165,12 +165,12 @@ class QcTarget
 
   def write_csv_line(output_csv)
     if ! File.exist?(output_csv)
-      header = ['Path', 'Warnings', 'Channels', 'Duration', 'Volume max', 'Channel 1 max', 'Channel 2 max', 'Average Phase', 'MD5 check', 'Mediaconch Status', 'Mediaconch Failures', 'Coding History']
+      header = ['Path', 'Warnings', 'Channels', 'Duration', 'Volume max', 'Channel 1 max', 'Channel 2 max', 'Average Phase', 'Integrated Loudness', 'MD5 check', 'Mediaconch Status', 'Mediaconch Failures', 'Coding History']
       CSV.open(output_csv, 'a') do |csv|
         csv << header
       end
     end
-    line = [@input_path,@warnings.flatten.join(', '),@channel_count, @duration_normalized, @overall_volume_max, @channel_one_max,@channel_two_max,@average_phase,@md5_alert, @conch_result, @conch_failures.flatten.join(', '),@coding_history]
+    line = [@input_path,@warnings.flatten.join(', '),@channel_count, @duration_normalized, @overall_volume_max, @channel_one_max,@channel_two_max,@average_phase,@integratedLoudness,@md5_alert, @conch_result, @conch_failures.flatten.join(', '),@coding_history]
     CSV.open(output_csv, 'a') do |csv|
       csv << line
     end
