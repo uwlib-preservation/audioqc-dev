@@ -1,7 +1,6 @@
-require 'parallel'
 require 'json'
 require 'csv'
-require 'ruby-progressbar'
+# require 'parallel'
 load 'audioqc_methods.rb'
 load_options('settings.csv')
 
@@ -19,9 +18,33 @@ targets.each do |target|
   end
 end
 
+if File.exist?($output_path_custom)
+  output_csv_path = $output_path_custom
+else
+  output_csv_path = ENV['HOME'] + "/Desktop/"
+end
+output_csv_name = "audioqc-out_#{timestamp}.csv"
+output_csv = "#{output_csv_path}/#{output_csv_name}"
 
 
 file_inputs.each {|file| qc_files << QcTarget.new(file)}
+
+qc_files.each do |file|
+  begin
+    file.media_info
+    file.media_conch
+    file.calculatehash
+    file.probe
+    file.phase
+    file.generate_warnings
+  rescue
+    file.error_warning
+  end
+end
+
+qc_files.each do |file|
+  file.write_csv_line(output_csv)
+end
 
 #Parallel version
 # #Calculate hash of audio stream
@@ -43,30 +66,3 @@ file_inputs.each {|file| qc_files << QcTarget.new(file)}
 # phase_data.each_with_index do |phase, index|
 #   qc_files[index].store_phase(phase)
 # end
-
-# Non-parallel version
-qc_files.each do |file|
-  begin
-    file.media_info
-    file.media_conch
-    file.calculatehash
-    file.probe
-    file.phase
-    file.generate_warnings
-  rescue
-    puts 'oops'
-  end
-end
-
-if File.exist?($output_path_custom)
-  output_csv_path = $output_path_custom
-else
-  output_csv_path = ENV['HOME'] + "/Desktop/"
-end
-output_csv_name = "audioqc-out_#{timestamp}.csv"
-output_csv = "#{output_csv_path}/#{output_csv_name}"
-
-
-qc_files.each do |file|
-  file.write_csv_line(output_csv)
-end

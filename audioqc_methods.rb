@@ -88,16 +88,20 @@ class QcTarget
     end
   end
 
+  
+  # only used in parallel version
   def store_hash(hash)
     @md5 = hash
   end
 
+  #only used in parallel version
   def store_probe(ffprobe_out)
     @channel_one_max = ffprobe_out[0]
     @channel_two_max = ffprobe_out[1]
     @integratedLoudness = ffprobe_out[2]
   end
 
+  #only used in parallel version
   def store_phase(average_phase)
     @average_phase = average_phase
   end
@@ -130,7 +134,7 @@ class QcTarget
       @warnings << 'Phase Warning'
     end
 
-    # Check Coding History for accuracy vs channels
+    # Check Coding History for accuracy vs. channels
     if ! @dual_count.nil? && ! @stereo_count.nil?
       if @channel_count == "1"
         unless (@mono_count - @dual_count) == @signal_chain_count
@@ -142,6 +146,7 @@ class QcTarget
         end
       end
     end
+    @status = 'pass'
   end
       
   def output
@@ -159,6 +164,10 @@ class QcTarget
     puts @conch_failures
   end
 
+  def error_warning
+    @status = 'fail'
+  end
+
   def csv_line
     return "@warnings,@input_path,@channel_one_max,@channel_two_max,@average_phase,@md5"
   end
@@ -170,7 +179,11 @@ class QcTarget
         csv << header
       end
     end
-    line = [@input_path,@warnings.flatten.join(', '),@channel_count, @duration_normalized, @overall_volume_max, @channel_one_max,@channel_two_max,@average_phase,@integratedLoudness,@md5_alert, @conch_result, @conch_failures.flatten.join(', '),@coding_history]
+    if @status == 'fail'
+      line = [@input_path, 'Failed to Scan']
+    elsif @status == 'pass'
+      line = [@input_path,@warnings.flatten.join(', '),@channel_count, @duration_normalized, @overall_volume_max, @channel_one_max,@channel_two_max,@average_phase,@integratedLoudness,@md5_alert, @conch_result, @conch_failures.flatten.join(', '),@coding_history]
+    end
     CSV.open(output_csv, 'a') do |csv|
       csv << line
     end
