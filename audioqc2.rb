@@ -10,9 +10,10 @@ qc_files = []
 timestamp = Time.now.strftime('%Y-%m-%d_%H-%M-%S')
 
 targets.each do |target|
+  target =  File.expand_path(target)
   if File.directory?(target)
     targets = Dir["#{target}/**/*.{WAV,wav}"]
-    targets.each {|file| file_inputs << file}
+    targets.each {|file| file_inputs << File.expand_path(file)}
   elsif File.extname(target).downcase == '.wav'
     file_inputs << target
   end
