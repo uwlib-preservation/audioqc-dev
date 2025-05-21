@@ -1,8 +1,20 @@
+#!/usr/bin/env ruby
+
 require 'json'
 require 'csv'
+require 'optparse'
 load 'audioqc_methods.rb'
 load_options('settings.csv')
+ARGV << '-h' if ARGV.empty?
 
+#Set up options
+parser = OptionParser.new
+parser.banner = "Usage: ruby audioqc2.rb [options] [inputs]"
+parser.on('-o', '--output=val', "Optional output path for CSV file", String) { |val| $output_path_custom = val }
+parser.on('-c', '--conch=val', "Path to optional mediaconch policy XML file", String) { |val| $conch_policy = val }
+parser.parse!
+
+#Get targets from file or directory input(s)
 targets = ARGV
 file_inputs = []
 qc_files = []
@@ -27,6 +39,7 @@ output_csv_name = "audioqc-out_#{timestamp}.csv"
 output_csv = "#{output_csv_path}/#{output_csv_name}"
 
 
+#QC each input and output to CSV
 file_inputs.each {|file| qc_files << QcTarget.new(file)}
 
 qc_files.each do |file|
