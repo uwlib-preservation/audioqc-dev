@@ -1,6 +1,5 @@
 require 'json'
 require 'csv'
-# require 'parallel'
 load 'audioqc_methods.rb'
 load_options('settings.csv')
 
@@ -41,13 +40,12 @@ qc_files.each do |file|
   rescue
     file.error_warning
   end
-end
-
-qc_files.each do |file|
   file.write_csv_line(output_csv)
 end
 
+
 #Parallel version
+# require 'parallel'
 # #Calculate hash of audio stream
 # hashes = Parallel.map(qc_files) {|file| file.calculatehash}
 
