@@ -28,6 +28,10 @@ targets.each do |target|
   elsif File.extname(target).downcase == '.wav'
     file_inputs << target
   end
+  if file_inputs.empty?
+    puts "No valid target files found! Please check inputs"
+    exit
+  end 
 end
 
 if File.exist?($output_path_custom)
