@@ -22,6 +22,7 @@ class QcTarget
     channel_one_vol = []
     channel_two_vol = []
     overall_volume = []
+    @high_volume_count = 0
     ffprobe_command = "ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.Overall.Number_of_samples,lavfi.astats.Overall.Peak_level,lavfi.astats.Overall.Max_difference,lavfi.astats.1.Peak_level,lavfi.astats.2.Peak_level,lavfi.astats.1.Peak_level,lavfi.astats.Overall.Mean_difference,lavfi.astats.Overall.Peak_level,lavfi.r128.I -f lavfi -i \"amovie='#{@input_path}'" + ',astats=reset=1:metadata=1,ebur128=metadata=1"'
     ffprobe_command.gsub!(':','\:')
     ffprobe_out = JSON.parse(`#{ffprobe_command}`)
@@ -38,6 +39,7 @@ class QcTarget
   @channel_one_max = channel_one_vol.max
   @channel_two_max = channel_two_vol.max
   @overall_volume_max = overall_volume.max
+  overall_volume.each {|volume| @high_volume_count += 1 if volume > $high_volume}
   output = [@channel_one_max, @channel_two_max, @overall_volume_max, @integratedLoudness]
   end
 
@@ -134,6 +136,13 @@ class QcTarget
       @warnings << 'Phase Warning'
     end
 
+    #Volume Warnings
+    if @channel_one_max > $high_volume || @overall_volume_max >  $high_volume
+      @warnings << "High Volume"
+    elsif ! @channel_two_max.nil? && @channel_two_max > $high_volume
+      @warnings << "High Volume"
+    end
+
     # Check Coding History for accuracy vs. channels
     if ! @dual_count.nil? && ! @stereo_count.nil?
       if @channel_count == "1"
@@ -174,7 +183,7 @@ class QcTarget
 
   def write_csv_line(output_csv)
     if ! File.exist?(output_csv)
-      header = ['Path', 'Warnings', 'Channels', 'Duration', 'Volume max', 'Channel 1 max', 'Channel 2 max', 'Average Phase', 'Integrated Loudness', 'MD5 check', 'Mediaconch Status', 'Mediaconch Failures', 'Coding History']
+      header = ['Path', 'Warnings', 'Channels', 'Duration', 'Volume max', 'Channel 1 max', 'Channel 2 max', 'Number of High Volume Frames', 'Average Phase', 'Integrated Loudness', 'MD5 check', 'Mediaconch Status', 'Mediaconch Failures', 'Coding History']
       CSV.open(output_csv, 'a') do |csv|
         csv << header
       end
@@ -182,7 +191,7 @@ class QcTarget
     if @status == 'fail'
       line = [@input_path, 'Failed to Scan']
     elsif @status == 'pass'
-      line = [@input_path,@warnings.flatten.join(', '),@channel_count, @duration_normalized, @overall_volume_max, @channel_one_max,@channel_two_max,@average_phase,@integratedLoudness,@md5_alert, @conch_result, @conch_failures.flatten.join(', '),@coding_history]
+      line = [@input_path,@warnings.flatten.join(', '),@channel_count, @duration_normalized, @overall_volume_max, @channel_one_max,@channel_two_max,@high_volume_count,@average_phase,@integratedLoudness,@md5_alert, @conch_result, @conch_failures.flatten.join(', '),@coding_history]
     end
     CSV.open(output_csv, 'a') do |csv|
       csv << line
