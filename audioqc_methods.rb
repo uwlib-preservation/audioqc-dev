@@ -98,21 +98,21 @@ class QcTarget
 
   
   # only used in parallel version
-  def store_hash(hash)
-    @md5 = hash
-  end
+  # def store_hash(hash)
+  #   @md5 = hash
+  # end
 
   #only used in parallel version
-  def store_probe(ffprobe_out)
-    @channel_one_max = ffprobe_out[0]
-    @channel_two_max = ffprobe_out[1]
-    @integratedLoudness = ffprobe_out[2]
-  end
+  # def store_probe(ffprobe_out)
+  #   @channel_one_max = ffprobe_out[0]
+  #   @channel_two_max = ffprobe_out[1]
+  #   @integratedLoudness = ffprobe_out[2]
+  # end
 
   #only used in parallel version
-  def store_phase(average_phase)
-    @average_phase = average_phase
-  end
+  # def store_phase(average_phase)
+  #   @average_phase = average_phase
+  # end
 
   def generate_warnings
     #MD5 Warnings
@@ -162,21 +162,6 @@ class QcTarget
       end
     end
     @status = 'pass'
-  end
-      
-  def output
-    puts @input_path
-    puts @md5
-    puts @stored_md5
-    puts @md5 == @stored_md5
-    puts @channel_one_max
-    puts @channel_two_max
-    puts @average_phase
-    puts @integratedLoudness
-    puts @warnings
-    puts $high_volume
-    puts @conch_result
-    puts @conch_failures
   end
 
   def error_warning
