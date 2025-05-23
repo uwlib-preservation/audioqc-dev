@@ -164,6 +164,19 @@ class QcTarget
     @status = 'pass'
   end
 
+  def make_jpg(output_jpg_dir)
+    Dir.mkdir(output_jpg_dir) unless File.exist?(output_jpg_dir)
+    output_path = output_jpg_dir + '/' + File.basename(@input_path,File.extname(@input_path)) + '.jpg'
+    `ffmpeg -i #{@input_path} -f lavfi -i color=c=#c0c0c0:s=938x240 -filter_complex " \
+    [0:a]asplit=3[a][b][c],[a]showwavespic=s=938x240:split_channels=1:colors=#3232c8:filter=peak[pk], \
+    [b]showwavespic=s=938x240:split_channels=1:colors=#6464dc[rms], \
+    [c]showspectrumpic=s=640x240[spectrum], \
+    [pk][rms]overlay=format=auto[nobg], \
+    [1:v][nobg]overlay=format=auto[bg], \
+    [bg][spectrum]vstack=inputs=2,drawtext=fontsize=20:fontcolor=black:text="#{File.basename(@input_path)}"[out0]" \
+    -map [out0] -frames:v 1 -update true #{output_path}`
+  end
+
   def error_warning
     @status = 'fail'
   end

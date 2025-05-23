@@ -12,6 +12,7 @@ parser = OptionParser.new
 parser.banner = "Usage: ruby audioqc2.rb [options] [inputs]"
 parser.on('-o', '--output=val', "Optional output path for CSV file", String) { |val| $output_path_custom = val }
 parser.on('-c', '--conch=val', "Path to optional mediaconch policy XML file", String) { |val| $conch_policy = val }
+parser.on('-j', '--jpg', "Create visualizations of input files") { $visualize_yes = true }
 parser.parse!
 
 #Get targets from file or directory input(s)
@@ -41,6 +42,7 @@ else
 end
 output_csv_name = "audioqc-out_#{timestamp}.csv"
 output_csv = "#{output_csv_path}/#{output_csv_name}"
+output_jpg_dir = "#{output_csv_path}/#{timestamp}_jpgs"
 
 
 #QC each input and output to CSV
@@ -58,6 +60,7 @@ qc_files.each do |file|
     file.error_warning
   end
   file.write_csv_line(output_csv)
+  file.make_jpg(output_jpg_dir) if $visualize_yes
 end
 
 
