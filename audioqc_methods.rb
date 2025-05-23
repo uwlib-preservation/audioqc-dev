@@ -5,6 +5,12 @@ def load_options(option_file)
   $dual_mono_phase_thresh = options[1][2].to_f
   $conch_policy = options[1][3]
   $output_path_custom = options[1][4]
+  $ffmpeg_path = options[1][5]
+  $ffprobe_path = options[1][6]
+  $mediaconch_path = options[1][7]
+  $ffmpeg_path = 'ffmpeg' if ! File.exist?($ffmpeg_path.to_s)
+  $ffprobe_path = 'ffprobe' if ! File.exist?($ffprobe_path.to_s)
+  $mediaconch_path = 'mediaconch' if ! File.exist?($mediaconch_path.to_s)
 end
 
 class QcTarget
@@ -15,7 +21,7 @@ class QcTarget
   end
 
   def calculatehash
-    @md5 = `ffmpeg -nostdin -i "#{@input_path}" -c copy -f md5 -`.chomp.reverse.chomp('=5DM').reverse.upcase
+    @md5 = `#{$ffmpeg_path} -nostdin -i "#{@input_path}" -c copy -f md5 -`.chomp.reverse.chomp('=5DM').reverse.upcase
   end
 
   def probe
@@ -23,7 +29,7 @@ class QcTarget
     channel_two_vol = []
     overall_volume = []
     @high_volume_count = 0
-    ffprobe_command = "ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.Overall.Number_of_samples,lavfi.astats.Overall.Peak_level,lavfi.astats.Overall.Max_difference,lavfi.astats.1.Peak_level,lavfi.astats.2.Peak_level,lavfi.astats.1.Peak_level,lavfi.astats.Overall.Mean_difference,lavfi.astats.Overall.Peak_level,lavfi.r128.I -f lavfi -i \"amovie='#{@input_path}'" + ',astats=reset=1:metadata=1,ebur128=metadata=1"'
+    ffprobe_command = "#{$ffprobe_path} -print_format json -threads auto -show_entries frame_tags=lavfi.astats.Overall.Number_of_samples,lavfi.astats.Overall.Peak_level,lavfi.astats.Overall.Max_difference,lavfi.astats.1.Peak_level,lavfi.astats.2.Peak_level,lavfi.astats.1.Peak_level,lavfi.astats.Overall.Mean_difference,lavfi.astats.Overall.Peak_level,lavfi.r128.I -f lavfi -i \"amovie='#{@input_path}'" + ',astats=reset=1:metadata=1,ebur128=metadata=1"'
     ffprobe_command.gsub!(':','\:')
     ffprobe_out = JSON.parse(`#{ffprobe_command}`)
     ffprobe_out['frames'].each do |frame|
@@ -45,14 +51,14 @@ class QcTarget
 
   def phase
     phase_values = []
-    phase_command = `ffmpeg -i "#{@input_path}" -af aformat=dblp,channelsplit,axcorrelate=size=1024:algo=fast -f wav - | ffprobe -print_format json -threads auto -show_entries frame_tags=lavfi.astats.1.DC_offset -f lavfi -i "amovie='pipe\\:0',astats=reset=1:metadata=1"`
+    phase_command = `#{$ffmpeg_path} -i "#{@input_path}" -af aformat=dblp,channelsplit,axcorrelate=size=1024:algo=fast -f wav - | #{$ffprobe_path} -print_format json -threads auto -show_entries frame_tags=lavfi.astats.1.DC_offset -f lavfi -i "amovie='pipe\\:0',astats=reset=1:metadata=1"`
     phase_info = JSON.parse(phase_command)
     phase_info['frames'].each {|frame| phase_values << frame['tags']['lavfi.astats.1.DC_offset'].to_f}
     @average_phase = (phase_values.sum/phase_values.count).round(2)
   end
 
   def media_conch
-    @media_conch_out = CSV.parse(`mediaconch --Policy=#{$conch_policy} --Format=csv "#{@input_path}"`)
+    @media_conch_out = CSV.parse(`#{$mediaconch_path} --Policy=#{$conch_policy} --Format=csv "#{@input_path}"`)
     @conch_failures = []
     if @media_conch_out[1][1] != 'pass'
       @conch_result = 'fail'

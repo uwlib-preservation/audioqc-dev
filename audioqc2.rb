@@ -34,7 +34,7 @@ targets.each do |target|
   end 
 end
 
-if File.exist?($output_path_custom)
+if File.exist?($output_path_custom.to_s)
   output_csv_path = $output_path_custom
 else
   output_csv_path = ENV['HOME'] + "/Desktop/"
